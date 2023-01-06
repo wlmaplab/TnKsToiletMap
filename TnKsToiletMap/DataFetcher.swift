@@ -22,7 +22,7 @@ class DataFetcher: ObservableObject {
     private var tnResults = Array<Dictionary<String,Any>>()
     private var ksResults = Array<Dictionary<String,Any>>()
     
-    private let infoString = "https://wlmaplab.github.io/json/tn-ks-toilet-dataset.json"
+    private let infoUrlString = "https://wlmaplab.github.io/json/tn-ks-toilet-dataset.json"
     
     private var tnUrlString = ""
     private var ksUrlString = ""
@@ -40,7 +40,7 @@ class DataFetcher: ObservableObject {
     // MARK: - Download Data
     
     private func downloadInfoData() {
-        httpGET_withFetchJsonObject(URLString: infoString) { json in
+        httpGET_withFetchJsonObject(URLString: infoUrlString) { json in
             if let json = json {
                 if let tnUrlStr = json["tn"] as? String {
                     self.tnUrlString = tnUrlStr
