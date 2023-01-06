@@ -38,7 +38,7 @@ struct MapView: UIViewRepresentable {
         mapView.addPlace(mapItem)
     }
     
-    func addData(_ array: [ToiletBin]) {
+    func addData(_ array: [Toilet]) {
         mapView.addToiletData(array)
     }
 }
@@ -106,7 +106,7 @@ class ToiletMapView: MKMapView, MKMapViewDelegate {
         self.selectAnnotation(annotation, animated: true)
     }
     
-    func addToiletData(_ array: [ToiletBin]) {
+    func addToiletData(_ array: [Toilet]) {
         self.removeAnnotations(self.annotations)
         
         var pins = [MapPin]()

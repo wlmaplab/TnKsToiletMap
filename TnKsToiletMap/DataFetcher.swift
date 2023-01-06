@@ -8,7 +8,7 @@
 import Foundation
 import MapKit
 
-struct ToiletBin: Identifiable {
+struct Toilet: Identifiable {
     let id = UUID()
     let coordinate : CLLocationCoordinate2D
     let address : String
@@ -17,7 +17,7 @@ struct ToiletBin: Identifiable {
 
 class DataFetcher: ObservableObject {
     
-    @Published var dataArray : [ToiletBin]?
+    @Published var dataArray : [Toilet]?
 
     private var tnResults = Array<Dictionary<String,Any>>()
     private var ksResults = Array<Dictionary<String,Any>>()
@@ -75,7 +75,7 @@ class DataFetcher: ObservableObject {
     }
     
     private func convertResultsToDataArray() {
-        var tmpArray = [ToiletBin]()
+        var tmpArray = [Toilet]()
         
         for info in tnResults {
             if let item = createTnToiletPinItem(info) {
@@ -98,26 +98,26 @@ class DataFetcher: ObservableObject {
     
     // MARK: - Pin Item
     
-    private func createTnToiletPinItem(_ info: Dictionary<String,Any>) -> ToiletBin? {
+    private func createTnToiletPinItem(_ info: Dictionary<String,Any>) -> Toilet? {
         let latitude = Double("\(info["緯度"] ?? "")")
         let longitude = Double("\(info["經度"] ?? "")")
         
         if let lat = latitude, let lng = longitude {
             let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lng)
             let address = "\(info["公廁名稱"] ?? "")"
-            return ToiletBin(coordinate: coordinate, address: address, city: "tn")
+            return Toilet(coordinate: coordinate, address: address, city: "tn")
         }
         return nil
     }
     
-    private func createKsToiletPinItem(_ info: Dictionary<String,Any>) -> ToiletBin? {
+    private func createKsToiletPinItem(_ info: Dictionary<String,Any>) -> Toilet? {
         let latitude = Double("\(info["Lat"] ?? "")")
         let longitude = Double("\(info["Lng"] ?? "")")
         
         if let lat = latitude, let lng = longitude {
             let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lng)
             let address = "\(info["name"] ?? "")（\(info["address"] ?? "")）"
-            return ToiletBin(coordinate: coordinate, address: address, city: "ks")
+            return Toilet(coordinate: coordinate, address: address, city: "ks")
         }
         return nil
     }
