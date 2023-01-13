@@ -36,13 +36,7 @@ class DataFetcher: ObservableObject {
     func download() async {
         print(">> 正在下載資料集...")
         dataArray = nil
-        await downloadInfoData()
-    }
-    
-    
-    // MARK: - Download Data
-    
-    private func downloadInfoData() async {
+        
         if let json = try? await httpGET_withFetchJsonObject(URLString: infoUrlString) {
             if let tnUrlStr = json["tn"] as? String {
                 tnUrlString = tnUrlStr
@@ -53,6 +47,9 @@ class DataFetcher: ObservableObject {
             await fetchData()
         }
     }
+    
+    
+    // MARK: - Fetch Data
     
     private func fetchData() async {
         async let tnData = fetchTnData()
