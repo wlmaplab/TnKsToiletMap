@@ -8,6 +8,7 @@
 import Foundation
 import MapKit
 
+
 struct Toilet: Identifiable {
     let id = UUID()
     let coordinate : CLLocationCoordinate2D
@@ -15,6 +16,8 @@ struct Toilet: Identifiable {
     let city: String
 }
 
+
+@MainActor
 class DataFetcher: ObservableObject {
     
     @Published var dataArray : [Toilet]?
@@ -30,47 +33,41 @@ class DataFetcher: ObservableObject {
     
     // MARK: - Functions
     
-    func download() {
+    func download() async {
         print(">> 正在下載資料集...")
         dataArray = nil
-        downloadInfoData()
+        await downloadInfoData()
     }
     
     
     // MARK: - Download Data
     
-    private func downloadInfoData() {
-        httpGET_withFetchJsonObject(URLString: infoUrlString) { json in
-            if let json = json {
-                if let tnUrlStr = json["tn"] as? String {
-                    self.tnUrlString = tnUrlStr
-                }
-                if let ksUrlStr = json["ks"] as? String {
-                    self.ksUrlString = ksUrlStr
-                }
+    private func downloadInfoData() async {
+        if let json = try? await httpGET_withFetchJsonObject(URLString: infoUrlString) {
+            if let tnUrlStr = json["tn"] as? String {
+                tnUrlString = tnUrlStr
             }
-            self.downloadTnData()
+            if let ksUrlStr = json["ks"] as? String {
+                ksUrlString = ksUrlStr
+            }
+            await downloadTnData()
         }
     }
     
     
-    private func downloadTnData() {
-        httpGET_withFetchJsonObject(URLString: tnUrlString) { json in
-            if let json = json,
-               let results = json["data"] as? Array<Dictionary<String,Any>>
-            {
-                self.tnResults.append(contentsOf: results)
-            }
-            self.downloadKsData()
+    private func downloadTnData() async {
+        if let json = try? await httpGET_withFetchJsonObject(URLString: tnUrlString),
+           let results = json["data"] as? Array<Dictionary<String,Any>>
+        {
+            tnResults.append(contentsOf: results)
+            await downloadKsData()
         }
     }
     
-    private func downloadKsData() {
-        httpGET_withFetchJsonArray(URLString: ksUrlString) { json in
-            if let results = json {
-                self.ksResults.append(contentsOf: results)
-            }
-            self.convertResultsToDataArray()
+    private func downloadKsData() async {
+        if let json = try? await httpGET_withFetchJsonArray(URLString: ksUrlString) {
+            ksResults.append(contentsOf: json)
+            convertResultsToDataArray()
         }
     }
     
@@ -125,12 +122,14 @@ class DataFetcher: ObservableObject {
     
     // MARK: - HTTP GET
     
-    private func httpGET_withFetchJsonObject(URLString: String, callback: @escaping (Dictionary<String,Any>?) -> Void) {
-        httpRequestWithFetchJsonObject(httpMethod: "GET", URLString: URLString, parameters: nil, callback: callback)
+    private func httpGET_withFetchJsonObject(URLString: String) async throws -> [String: Any]? {
+        let json = try await httpRequestWithFetchJsonObject(httpMethod: "GET", URLString: URLString, parameters: nil)
+        return json
     }
     
-    private func httpGET_withFetchJsonArray(URLString: String, callback: @escaping (Array<Dictionary<String,Any>>?) -> Void) {
-        httpRequestWithFetchJsonArray(httpMethod: "GET", URLString: URLString, parameters: nil, callback: callback)
+    private func httpGET_withFetchJsonArray(URLString: String) async throws -> [[String: Any]]? {
+        let json = try await httpRequestWithFetchJsonArray(httpMethod: "GET", URLString: URLString, parameters: nil)
+        return json
     }
     
     
@@ -138,9 +137,7 @@ class DataFetcher: ObservableObject {
     
     private func httpRequestWithFetchJsonObject(httpMethod: String,
                                                 URLString: String,
-                                                parameters: Dictionary<String,Any>?,
-                                                callback: @escaping (Dictionary<String,Any>?) -> Void)
-    {
+                                                parameters: Dictionary<String,Any>?) async throws -> [String: Any]? {
         // Create request
         let url = URL(string: URLString)!
         var request = URLRequest(url: url)
@@ -158,31 +155,17 @@ class DataFetcher: ObservableObject {
             request.httpBody = jsonData
         }
         
-        // Task
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                guard let data = data, error == nil else {
-                    print(error?.localizedDescription ?? "No data")
-                    callback(nil)
-                    return
-                }
-                
-                let responseJSON = try? JSONSerialization.jsonObject(with: data, options: [])
-                if let responseJSON = responseJSON as? [String: Any] {
-                    callback(responseJSON)
-                } else {
-                    callback(nil)
-                }
-            }
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let json = try? JSONSerialization.jsonObject(with: data, options: [])
+        if let json = json as? [String: Any] {
+            return json
         }
-        task.resume()
+        return nil
     }
     
     private func httpRequestWithFetchJsonArray(httpMethod: String,
-                                               URLString: String,
-                                               parameters: Dictionary<String,Any>?,
-                                               callback: @escaping (Array<Dictionary<String,Any>>?) -> Void)
-    {
+                                                URLString: String,
+                                                parameters: Dictionary<String,Any>?) async throws -> [[String: Any]]? {
         // Create request
         let url = URL(string: URLString)!
         var request = URLRequest(url: url)
@@ -200,23 +183,11 @@ class DataFetcher: ObservableObject {
             request.httpBody = jsonData
         }
         
-        // Task
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                guard let data = data, error == nil else {
-                    print(error?.localizedDescription ?? "No data")
-                    callback(nil)
-                    return
-                }
-                
-                let responseJSON = try? JSONSerialization.jsonObject(with: data, options: [])
-                if let responseJSON = responseJSON as? Array<Dictionary<String,Any>> {
-                    callback(responseJSON)
-                } else {
-                    callback(nil)
-                }
-            }
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let json = try? JSONSerialization.jsonObject(with: data, options: [])
+        if let json = json as? [[String: Any]] {
+            return json
         }
-        task.resume()
+        return nil
     }
 }
