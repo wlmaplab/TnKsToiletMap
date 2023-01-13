@@ -50,25 +50,37 @@ class DataFetcher: ObservableObject {
             if let ksUrlStr = json["ks"] as? String {
                 ksUrlString = ksUrlStr
             }
-            await downloadTnData()
+            await fetchData()
         }
     }
     
+    private func fetchData() async {
+        async let tnData = fetchTnData()
+        async let ksData = fetchKsData()
+        
+        if let tnData = await tnData {
+            tnResults.append(contentsOf: tnData)
+        }
+        if let ksData = await ksData {
+            ksResults.append(contentsOf: ksData)
+        }
+        convertResultsToDataArray()
+    }
     
-    private func downloadTnData() async {
+    private func fetchTnData() async -> [[String: Any]]? {
         if let json = try? await httpGET_withFetchJsonObject(URLString: tnUrlString),
            let results = json["data"] as? Array<Dictionary<String,Any>>
         {
-            tnResults.append(contentsOf: results)
-            await downloadKsData()
+            return results
         }
+        return nil
     }
     
-    private func downloadKsData() async {
+    private func fetchKsData() async -> [[String: Any]]? {
         if let json = try? await httpGET_withFetchJsonArray(URLString: ksUrlString) {
-            ksResults.append(contentsOf: json)
-            convertResultsToDataArray()
+            return json
         }
+        return nil
     }
     
     private func convertResultsToDataArray() {
