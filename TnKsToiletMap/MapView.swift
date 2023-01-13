@@ -195,7 +195,7 @@ class ToiletMapView: MKMapView, MKMapViewDelegate {
         annotationView?.coordinate = annotation.coordinate
         
         annotationView?.selectedAction = { [weak self] (coordinate) in
-            self?.selectedAnnotation(annotation, coordinate: coordinate)
+            self?.selectedAnnotationAction(annotation, coordinate: coordinate)
         }
     }
     
@@ -238,7 +238,7 @@ class ToiletMapView: MKMapView, MKMapViewDelegate {
     
     // MARK: - Selected Annotation
         
-    func selectedAnnotation(_ annotation: MapPin, coordinate: CLLocationCoordinate2D) {
+    func selectedAnnotationAction(_ annotation: MapPin, coordinate: CLLocationCoordinate2D) {
         self.selectedAnnotation = annotation
         self.setCenter(coordinate, animated: true)
     }
